@@ -10,14 +10,6 @@ import random
 COLUMN_COUNT = 20
 LINES = 50
 
-COLORS = [
-    #("000000"),
-    ("cccccc"),
-    ("ffffff"),
-    ("ff0000"),
-    ("339933"),
-    ("ffff00"),
-    ]
 
 
 def hex2tuple(hex_number):
@@ -29,6 +21,13 @@ def hex2tuple(hex_number):
         s = s[1:]
 
     return tuple([int(s[x*2:x*2+2], 16) for x in range(3)])
+
+
+def tuple2hex(tup):
+    a, b, c = [hex(e)[2:].zfill(2) for e in tup]
+    s = a + b + c
+    return s
+    
 
 
 def select_length():
@@ -85,7 +84,7 @@ def make_color_list(lengths, colors):
     return l
 
             
-def pauls_house(dimensions, dst):
+def pauls_house(dimensions, dst, colors):
     """
     An art board like at Paul's house
     """
@@ -99,7 +98,7 @@ def pauls_house(dimensions, dst):
     y0 = 0
 
     for length in row_lengths:
-        column_colors = [hex2tuple(random.choice(COLORS)) for e in column_lengths]
+        column_colors = [hex2tuple(random.choice(colors)) for e in column_lengths]
         color_list = make_color_list(column_lengths, column_colors)
         for y in range(y0, y0 + length):
             for x, color in enumerate(color_list):
@@ -113,7 +112,7 @@ def pauls_house(dimensions, dst):
 
 
 
-def random_colors(dimensions, dst):
+def random_colors(dimensions, dst, colors):
     """
     Random colors for the given dimensions.
     """
@@ -123,7 +122,7 @@ def random_colors(dimensions, dst):
     x, y = dimensions
     for e in range(x):
         for f in range(y):
-            color = hex2tuple(random.choice(COLORS))
+            color = hex2tuple(random.choice(colors))
             px = image.putpixel((e, f), color)
 
     image.save(dst)
@@ -135,9 +134,40 @@ def main():
     Run the program.
     """
 
+    COLORS = [
+        #("000000"),
+        "cccccc",
+        "ffffff",
+        "ff0000",
+        "339933",
+        "ffff00",
+        ]
+
+    colors2 = [
+        "cccccc",
+        "ffffff",
+        "ff0000",
+        "339933",
+        "ffff00",
+        "ff3300",
+        "993300",
+        "993399",
+        ]
+
+
+    colors3 = []
+    for e in range(100):
+        r = int(255 * random.random())
+        g = int(255 * random.random())
+        b = int(255 * random.random())
+        colors3.append(tuple2hex((r, g, b)))
+
+
     dimensions = (2000, 800)
-    #random_colors(dimensions, img2.gif)
-    print(pauls_house(dimensions, 'img3.gif'))
+    #random_colors(dimensions, 'img2.gif', COLORS)
+    #random_colors(dimensions, 'img4.gif', colors2)
+    random_colors(dimensions, 'img5.gif', colors3)
+    #pauls_house(dimensions, 'img3.gif', COLORS)
 
 
 
