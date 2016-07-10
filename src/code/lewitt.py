@@ -3,7 +3,7 @@
 
 import random
 
-import rhinoscriptsyntax as rs
+#import rhinoscriptsyntax as rs
 
 
 
@@ -57,6 +57,29 @@ def wall_drawing_797(width, count, distance):
     """
     # How to simulate a hand-drawn line?
     
+
+
+# could do something with permutations here.
+def create_grid(width, height):
+    l = []
+    for x in range(width):
+        for y in range(height):
+            p = (x, y, 0)
+            l.append(p)
+
+    return l
+
+
+def create_inner_grid(width, height):
+    l = []
+    for x in range(1, width-1):
+        for y in range(1, height-1):
+            p = (x, y, 0)
+            l.append(p)
+
+    return l
+
+
     
 def wall_drawing_273(grid_size):
     """
@@ -121,6 +144,114 @@ def select_grid_point(grid_points, exclude):
         candidate = random.choice(grid_points)
         if candidate[0] not in exclude and candidate[1] not in exclude:
             return candidate
+
+
+
+
+class Cube(object):
+    """
+    Exploring the possible permutations of a cube.
+    based on Lewitt's open cube variations.
+    """
+
+    def __init__(self):
+        self.vertices = [1,2,3,4,5,6,7,8]
+        self.edges = [
+            (1,2), (2,3), (3,4), (4,1), 
+            (1,5), (2,6), (3,7), (4,8),
+            (5,6), (6,7), (7,8), (8,5),
+            ]
+
+
+    def remove_edge(self, edge):
+        self.edges = [e for e in self.edges if e != edge]
+
+    def remove_random_edge(self):
+        import random
+        e = random.choice(self.edges)
+        self.remove_edge(e)
+
+
+
+    def rotate_xz(self):
+        mapping = [
+            (5, 1), (6, 5), (7, 8), (8, 4),
+            (1, 2), (2, 6), (3, 7), (4, 3),
+                   ]
+        self.rotate(mapping)
+    
+
+    def rotate_xy(self):
+        mapping = [
+            (1, 4), (2, 1), (3, 2), (4, 3),
+            (5, 8), (6, 5), (7, 6), (8, 7),
+            ]
+
+        self.rotate(mapping)
+
+
+    def rotate_yz(self):
+        mapping = [
+            (5, 1), (6, 2), (7, 6), (8, 5),
+            (1, 4), (2, 3), (3, 7), (4, 8),
+            ]
+
+        self.rotate(mapping)
+
+
+
+    def rotate(self, mapping):
+        d = dict(mapping)
+
+        self.vertices = [d[v] for v in self.vertices]
+
+        new_edges = []
+        for v1, v2 in self.edges:
+            ne = (d[v1], d[v2])
+            new_edges.append(ne)
+
+        self.edges = new_edges
+            
+
+def is_connected(edges):
+        """
+        Walk an undirected graph.
+        """
+        # Sure forgot how to do this.
+
+        unvisited = set([e[0] for e in edges] + [e[1] for e in edges])
+
+        visited = set()
+
+        to_visit = set([list(unvisited)[0]])
+        # If this were a 
+
+        while True:
+            current = to_visit.pop()
+            unvisited.remove(current)
+            visited.add(current)
+
+            for v1, v2 in edges:
+                if v1 == current and v2 not in visited:
+                    to_visit.add(v2)
+                if v2 == current and v1 not in visited:
+                    to_visit.add(v1)
+
+            if len(unvisited) == 0:
+                return True
+
+            elif len(to_visit) == 0 and len(unvisited) > 0:
+                return False
+
+
+
+
+
+def open_cubes():
+    # Generate all open cubes?
+    pass
+
+
             
 
 if __name__ == "__main__":
