@@ -5,6 +5,8 @@ import random
 
 #import rhinoscriptsyntax as rs
 
+from collections import defaultdict
+
 
 
 def random_connections(width, height, points):
@@ -259,10 +261,76 @@ class Cube(object):
 
 
 class Cube2(object):
+    """
+    A face-based cube.
+    """
+
+    OPPOSITE_FACES = {
+        1:3,
+        2:4,
+        3:1,
+        4:2,
+        5:6,
+        6:5,
+        }
+
+    VERTEX_MAPPING = [
+        (1, (1,4,6)),
+        (2, (1,2,6)),
+        (3, (2,3,6)),
+        (4, (3,4,6)),
+        (5, (1,4,5)),
+        (6, (1,2,5)),
+        (7, (2,3,5)),
+        (8, (3,4,5)),
+        ]
+
+    VERTEX_DICT = dict([(b, a) for (a, b) in VERTEX_MAPPING])
 
     def __init__(self):
-
         self.faces = [1,2,3,4,5,6] # f, r, b, l, t, b
+
+
+    def face_neighbors(self, face):
+        return [e for e in self.faces if e not in (face, self.OPPOSITE_FACES[face])]
+
+
+    def construct_edge_mapping(self):
+        mapping = defaultdict(list)
+
+        for vertex, faces in self.VERTEX_MAPPING:
+            f1, f2, f3 = faces
+            mapping[(f1,f2)].append(vertex)
+            mapping[(f2,f3)].append(vertex)
+            mapping[(f1,f3)].append(vertex)
+
+        d2 = {}
+        for key, value in mapping.items():
+            d2[key] = tuple(value)
+
+        return d2
+
+
+    def orientations(self):
+        for a in self.faces:
+            for b in self.neighbors:
+                c = self.OPPOSITE_FACES[a]
+                d = self.OPPOSITE_FACES[c]
+                # how to know which face is on top and which is on bottom?
+                # does it actually matter?
+                
+        
+            
+            
+
+    def get_vertex(self, faces):
+        ft = tuple(sorted(faces))
+        return self.VERTEX_DICT[ft]
+
+    def get_edge(self, faces):
+        return
+        
+
 
     def rotate_xy(self):
         # clockwise
