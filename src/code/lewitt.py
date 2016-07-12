@@ -153,25 +153,60 @@ class Cube(object):
     Exploring the possible permutations of a cube.
     based on Lewitt's open cube variations.
     """
-
-    def __init__(self):
-        self.vertices = [1,2,3,4,5,6,7,8]
-        self.edges = [
-            (1,2), (2,3), (3,4), (4,1), 
-            (1,5), (2,6), (3,7), (4,8),
-            (5,6), (6,7), (7,8), (8,5),
-            ]
+    # rotations
+    # http://www.euclideanspace.com/maths/discrete/groups/categorise/finite/cube/
+    # 6 faces. Then which face is ...
 
 
-    def remove_edge(self, edge):
-        self.edges = [e for e in self.edges if e != edge]
 
-    def remove_random_edge(self):
-        import random
-        e = random.choice(self.edges)
-        self.remove_edge(e)
+    def __init__(self, edges=None):
+        """
+        Initialize a cube, or a partial cube.
+        """
+
+        if edges is None:
+            self.edges = (
+                (1,2), (2,3), (3,4), (4,1), 
+                (1,5), (2,6), (3,7), (4,8),
+                (5,6), (6,7), (7,8), (8,5),
+                )
+        else:
+            self.edges = edges
 
 
+    def __eq__(self, other):
+        e1 = set(self.edges)
+        e2 = set(other.edges)
+
+        return e1 == e2
+
+
+    def __hash__(self):
+        return hash(tuple(sorted(self.edges)))
+
+    @property
+    def faces(self):
+        """
+        """
+        return
+
+    @property
+    def vertices(self):
+        return
+
+
+
+    # Rotations
+
+    def rotate(self, mapping):
+        d = dict(mapping)
+
+        new_edges = []
+        for v1, v2 in self.edges:
+            ne = (d[v1], d[v2])
+            new_edges.append(ne)
+
+        self.edges = new_edges
 
     def rotate_xz(self):
         mapping = [
@@ -200,17 +235,64 @@ class Cube(object):
 
 
 
-    def rotate(self, mapping):
-        d = dict(mapping)
+    def all_permutations(self):
+        xy = self.rotate_xx
+        xz = self.rotate_xz
+        yz = self.rotate_yz
+        
 
-        self.vertices = [d[v] for v in self.vertices]
 
-        new_edges = []
-        for v1, v2 in self.edges:
-            ne = (d[v1], d[v2])
-            new_edges.append(ne)
+    # Edge trimming
 
-        self.edges = new_edges
+    def remove_edge(self, edge):
+        self.edges = [e for e in self.edges if e != edge]
+
+    def remove_edges(self, edges):
+        for edge in edges:
+            self.remove_edge(edge)
+
+    def remove_random_edge(self):
+        import random
+        e = random.choice(self.edges)
+        self.remove_edge(e)
+
+
+
+class Cube2(object):
+
+    def __init__(self):
+
+        self.faces = [1,2,3,4,5,6] # f, r, b, l, t, b
+
+    def rotate_xy(self):
+        # clockwise
+        f, r, b, l, t, b = self.faces
+        self.faces = [r, b, l, f, t, b]
+
+
+    def rotate_xz(self):
+        return
+
+    def rotate_yz(self):
+        return
+
+    @property
+    def vertices(self):
+        # bottom; top
+        
+        return
+
+    @property
+    def edges(self):
+        #bottom; vertical; top
+        return
+        
+
+
+def create_cubes():
+    """
+    """
+    pass
             
 
 def is_connected(edges):
@@ -244,6 +326,23 @@ def is_connected(edges):
                 return False
 
 
+
+def open_cubes2():
+    cubes = [Cube() for e in range(100)]
+
+    for cube in cubes:
+        cube.remove_random_edge()
+        
+    uniques = set()
+
+    
+
+    for cube in cubes:
+        if cube not in uniques:
+            uniques.add(cube)
+
+    return uniques
+        
 
 
 
