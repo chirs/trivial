@@ -63,6 +63,8 @@
   .btn-correct:active { background: #0e3baa; }
   .btn-wrong { background: #c0392b; color: #fff; }
   .btn-wrong:active { background: #962d22; }
+  .btn-skip { background: #555; color: #ccc; }
+  .btn-skip:active { background: #444; }
   .divider {
     width: 100%;
     max-width: 400px;
@@ -99,6 +101,7 @@
   }
   .history .h-correct { color: #4a9eff; }
   .history .h-wrong { color: #e74c3c; }
+  .history .h-skip { color: #888; }
   #reset {
     margin-top: 24px;
     background: #333;
@@ -126,6 +129,7 @@
   <input class="wager-input" id="dd-wager" type="number" value="1000" min="0" step="100">
   <button class="btn btn-correct" onclick="wager('dd', 1)">✓</button>
   <button class="btn btn-wrong" onclick="wager('dd', -1)">✗</button>
+  <button class="btn btn-skip" onclick="skip('dd')">–</button>
   <span class="history" id="dd-history"></span>
 </div>
 
@@ -134,6 +138,7 @@
   <input class="wager-input" id="fj-wager" type="number" value="1000" min="0" step="100">
   <button class="btn btn-correct" onclick="wager('fj', 1)">✓</button>
   <button class="btn btn-wrong" onclick="wager('fj', -1)">✗</button>
+  <button class="btn btn-skip" onclick="skip('fj')">–</button>
   <span class="history" id="fj-history"></span>
 </div>
 
@@ -167,6 +172,7 @@
         <span class="clue-label">$${val}</span>
         <button class="btn btn-correct" onclick="adjust(${val}, '${key}', true)">✓</button>
         <button class="btn btn-wrong" onclick="adjust(${-val}, '${key}', false)">✗</button>
+        <button class="btn btn-skip" onclick="skip('${key}')">–</button>
         <span class="history" id="${key}-history">${renderHistory(key)}</span>
       `;
       container.appendChild(row);
@@ -175,7 +181,9 @@
 
   function renderHistory(key) {
     return (history[key] || []).map(c =>
-      c ? '<span class="h-correct">✓</span>' : '<span class="h-wrong">✗</span>'
+      c === true ? '<span class="h-correct">✓</span>' :
+      c === false ? '<span class="h-wrong">✗</span>' :
+      '<span class="h-skip">–</span>'
     ).join("");
   }
 
@@ -190,6 +198,11 @@
     score += amount;
     logHistory(key, correct);
     render();
+  }
+
+  function skip(key) {
+    if (gameOver) return;
+    logHistory(key, null);
   }
 
   function wager(id, sign) {
