@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeopardy Score Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Helvetica Neue", sans-serif;
+    background: #0a0a2e;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  #score {
+    font-size: 4rem;
+    font-weight: bold;
+    margin: 20px 0;
+    color: #f5c518;
+  }
+  #round-toggle {
+    font-size: 1.2rem;
+    margin-bottom: 24px;
+    cursor: pointer;
+    background: #1a1a5e;
+    border: 2px solid #3a3a8e;
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 6px;
+  }
+  #round-label {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: #aaa;
+  }
+  .clue-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .clue-label {
+    width: 80px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #f5c518;
+  }
+  .btn {
+    border: none;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    min-width: 60px;
+  }
+  .btn-correct { background: #1a4fd6; color: #fff; }
+  .btn-correct:active { background: #0e3baa; }
+  .btn-wrong { background: #c0392b; color: #fff; }
+  .btn-wrong:active { background: #962d22; }
+  .divider {
+    width: 100%;
+    max-width: 400px;
+    border-top: 1px solid #3a3a8e;
+    margin: 16px 0;
+  }
+  .wager-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .wager-section label {
+    font-size: 1.1rem;
+    font-weight: bold;
+    width: 120px;
+    text-align: right;
+    color: #f5c518;
+  }
+  .wager-input {
+    width: 90px;
+    padding: 8px;
+    font-size: 1rem;
+    border: 2px solid #3a3a8e;
+    border-radius: 6px;
+    background: #1a1a5e;
+    color: #fff;
+    text-align: center;
+  }
+  .history {
+    font-size: 0.85rem;
+    margin-left: 8px;
+    letter-spacing: 2px;
+  }
+  .history .h-correct { color: #4a9eff; }
+  .history .h-wrong { color: #e74c3c; }
+  #reset {
+    margin-top: 24px;
+    background: #333;
+    color: #aaa;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+<div id="score">$0</div>
+<div id="round-label">Single Jeopardy</div>
+<button id="round-toggle" onclick="toggleRound()">Switch to Double Jeopardy</button>
+
+<div id="clue-buttons"></div>
+
+<div class="divider"></div>
+
+<div class="wager-section">
+  <label>Daily Double</label>
+  <input class="wager-input" id="dd-wager" type="number" value="1000" min="0" step="100">
+  <button class="btn btn-correct" onclick="wager('dd', 1)">✓</button>
+  <button class="btn btn-wrong" onclick="wager('dd', -1)">✗</button>
+  <span class="history" id="dd-history"></span>
+</div>
+
+<div class="wager-section">
+  <label>Final Jeopardy</label>
+  <input class="wager-input" id="fj-wager" type="number" value="1000" min="0" step="100">
+  <button class="btn btn-correct" onclick="wager('fj', 1)">✓</button>
+  <button class="btn btn-wrong" onclick="wager('fj', -1)">✗</button>
+  <span class="history" id="fj-history"></span>
+</div>
+
+<button id="reset" onclick="resetScore()">Reset</button>
+
+<script>
+  let score = 0;
+  let isDouble = false;
+  let gameOver = false;
+  let ddUsed = 0;
+  const base = [200, 400, 600, 800, 1000];
+  const history = {};
+
+  function render() {
+    document.getElementById("score").textContent =
+      (score < 0 ? "-$" + Math.abs(score) : "$" + score);
+  }
+
+  function buildButtons() {
+    const mult = isDouble ? 2 : 1;
+    const container = document.getElementById("clue-buttons");
+    container.innerHTML = "";
+    base.forEach((v, i) => {
+      const val = v * mult;
+      const row = document.createElement("div");
+      row.className = "clue-row";
+      const round = isDouble ? "dj" : "sj";
+      const key = round + "-" + String.fromCharCode(97 + i);
+      if (!history[key]) history[key] = [];
+      row.innerHTML = `
+        <span class="clue-label">$${val}</span>
+        <button class="btn btn-correct" onclick="adjust(${val}, '${key}', true)">✓</button>
+        <button class="btn btn-wrong" onclick="adjust(${-val}, '${key}', false)">✗</button>
+        <span class="history" id="${key}-history">${renderHistory(key)}</span>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function renderHistory(key) {
+    return (history[key] || []).map(c =>
+      c ? '<span class="h-correct">✓</span>' : '<span class="h-wrong">✗</span>'
+    ).join("");
+  }
+
+  function logHistory(key, correct) {
+    if (!history[key]) history[key] = [];
+    history[key].push(correct);
+    document.getElementById(key + "-history").innerHTML = renderHistory(key);
+  }
+
+  function adjust(amount, key, correct) {
+    if (gameOver) return;
+    score += amount;
+    logHistory(key, correct);
+    render();
+  }
+
+  function wager(id, sign) {
+    if (gameOver) return;
+    if (id === "dd") {
+      const maxDD = isDouble ? 2 : 1;
+      if (ddUsed >= maxDD) {
+        alert("No daily doubles remaining this round.");
+        return;
+      }
+    }
+    if (id === "fj" && (history["fj"] || []).length >= 1) return;
+    const val = parseInt(document.getElementById(id + "-wager").value) || 0;
+    const maxWager = id === "fj" ? score : Math.max(score, isDouble ? 2000 : 1000);
+    if (val > maxWager) {
+      alert("Max wager is $" + maxWager);
+      return;
+    }
+    if (val < 0) return;
+    logHistory(id, sign > 0);
+    score += val * sign;
+    if (id === "dd") ddUsed++;
+    if (id === "fj") lockGame();
+    render();
+  }
+
+  function toggleRound() {
+    if (gameOver) return;
+    isDouble = !isDouble;
+    ddUsed = 0;
+    document.getElementById("round-label").textContent =
+      isDouble ? "Double Jeopardy" : "Single Jeopardy";
+    document.getElementById("round-toggle").textContent =
+      isDouble ? "Switch to Single Jeopardy" : "Switch to Double Jeopardy";
+    buildButtons();
+  }
+
+  function lockGame() {
+    gameOver = true;
+    document.querySelectorAll(".btn").forEach(b => b.disabled = true);
+    document.getElementById("round-toggle").disabled = true;
+  }
+
+  function resetScore() {
+    score = 0;
+    isDouble = false;
+    gameOver = false;
+    ddUsed = 0;
+    document.querySelectorAll(".btn").forEach(b => b.disabled = false);
+    document.getElementById("round-toggle").disabled = false;
+    document.getElementById("round-label").textContent = "Single Jeopardy";
+    document.getElementById("round-toggle").textContent = "Switch to Double Jeopardy";
+    Object.keys(history).forEach(k => delete history[k]);
+    document.getElementById("dd-wager").value = 1000;
+    document.getElementById("fj-wager").value = 1000;
+    document.getElementById("dd-history").innerHTML = "";
+    document.getElementById("fj-history").innerHTML = "";
+    buildButtons();
+    render();
+  }
+
+  buildButtons();
+</script>
+</body>
+</html>
